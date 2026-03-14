@@ -1,0 +1,37 @@
+query GetGames($filter: GameFilter) {
+    games(filter: $filter) {
+        id
+        name
+        description
+        coverImage
+        backgroundImage
+        platforms {
+            id
+            name
+        }
+        source
+        isInstalled
+        playCount
+        lastActivity
+        gameId
+    }
+}
+
+query GetGame($id: ID!) {
+    game(id: $id) {
+        id
+        name
+        description
+        coverImage
+        backgroundImage
+        platforms {
+            id
+            name
+        }
+        source
+        isInstalled
+        playCount
+        lastActivity
+        gameId
+    }
+}

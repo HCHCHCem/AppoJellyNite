@@ -1,0 +1,8 @@
+{
+    "playnite_library_path": "%APPDATA%\\Playnite\\library\\games",
+    "playnite_files_path": "%APPDATA%\\Playnite\\library\\files",
+    "apollo_apps_json_path": "C:\\Program Files\\Apollo\\config\\apps.json",
+    "apollo_artwork_dir": "C:\\Program Files\\Apollo\\config\\artwork",
+    "restart_apollo_on_sync": false,
+    "apollo_service_name": "Apollo"
+}

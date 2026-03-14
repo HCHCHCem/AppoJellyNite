@@ -1,0 +1,35 @@
+type Query {
+    games(filter: GameFilter): [Game!]!
+    game(id: ID!): Game
+    platforms: [Platform!]!
+}
+
+input GameFilter {
+    isInstalled: Boolean
+    source: String
+    platformId: ID
+    searchTerm: String
+}
+
+type Game {
+    id: ID!
+    name: String!
+    description: String
+    coverImage: String
+    backgroundImage: String
+    platforms: [Platform!]
+    source: String
+    isInstalled: Boolean!
+    playCount: Int
+    lastActivity: String
+    gameId: String
+    sortName: String
+    communityScore: Float
+    added: String
+}
+
+type Platform {
+    id: ID!
+    name: String!
+    icon: String
+}

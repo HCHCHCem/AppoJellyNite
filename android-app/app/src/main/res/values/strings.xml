@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AppoJellyNite</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_games">Games</string>
+    <string name="tab_media">Media</string>
+    <string name="tab_search">Search</string>
+    <string name="continue_watching">Continue Watching</string>
+    <string name="recently_added">Recently Added</string>
+    <string name="pc_games">PC Games</string>
+    <string name="movies">Movies</string>
+    <string name="tv_shows">TV Shows</string>
+    <string name="settings">Settings</string>
+    <string name="stream">Stream</string>
+    <string name="play">Play</string>
+    <string name="pairing">Pairing</string>
+    <string name="enter_pin">Enter the PIN shown on Apollo</string>
+    <string name="connecting">Connecting…</string>
+    <string name="server_unreachable">Server unreachable</string>
+    <string name="no_content">No content available</string>
+</resources>
