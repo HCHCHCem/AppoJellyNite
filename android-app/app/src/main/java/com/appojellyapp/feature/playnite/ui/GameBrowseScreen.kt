@@ -6,13 +6,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.appojellyapp.core.model.ContentItem
+import com.appojellyapp.core.model.UiState
 
 @Composable
 fun GameBrowseScreen(
@@ -38,51 +42,81 @@ fun GameBrowseScreen(
     viewModel: GameBrowseViewModel = hiltViewModel(),
 ) {
     val games by viewModel.games.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
     val platforms by viewModel.platforms.collectAsState()
     var selectedPlatform by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Platform filter chips
-        if (platforms.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilterChip(
-                    selected = selectedPlatform == null,
-                    onClick = { selectedPlatform = null },
-                    label = { Text("All") },
-                )
-                platforms.take(4).forEach { platform ->
-                    FilterChip(
-                        selected = selectedPlatform == platform,
-                        onClick = {
-                            selectedPlatform = if (selectedPlatform == platform) null else platform
-                        },
-                        label = { Text(platform) },
-                    )
+        when (val state = uiState) {
+            is UiState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Loading games...")
+                    }
                 }
             }
-        }
 
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            val filteredGames = if (selectedPlatform != null) {
-                games.filter { it.platform.equals(selectedPlatform, ignoreCase = true) }
-            } else {
-                games
+            is UiState.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(32.dp),
+                    ) {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        state.retry?.let { retry ->
+                            Button(onClick = retry) { Text("Retry") }
+                        }
+                    }
+                }
             }
 
-            GameGrid(games = filteredGames, onGameClick = onGameClick)
+            is UiState.Success -> {
+                // Platform filter chips
+                if (platforms.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = selectedPlatform == null,
+                            onClick = { selectedPlatform = null },
+                            label = { Text("All") },
+                        )
+                        platforms.take(4).forEach { platform ->
+                            FilterChip(
+                                selected = selectedPlatform == platform,
+                                onClick = {
+                                    selectedPlatform = if (selectedPlatform == platform) null else platform
+                                },
+                                label = { Text(platform) },
+                            )
+                        }
+                    }
+                }
+
+                val filteredGames = if (selectedPlatform != null) {
+                    games.filter { it.platform.equals(selectedPlatform, ignoreCase = true) }
+                } else {
+                    games
+                }
+
+                GameGrid(games = filteredGames, onGameClick = onGameClick)
+            }
         }
     }
 }

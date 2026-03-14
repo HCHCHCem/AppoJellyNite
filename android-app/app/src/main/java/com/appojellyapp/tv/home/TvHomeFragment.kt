@@ -13,10 +13,12 @@ import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
 import androidx.lifecycle.lifecycleScope
+import coil.load
 import com.appojellyapp.core.model.ContentItem
 import com.appojellyapp.core.model.MediaType
 import com.appojellyapp.feature.home.data.HomeRepository
 import com.appojellyapp.feature.streaming.ui.StreamActivity
+import com.appojellyapp.tv.detail.TvDetailFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
@@ -38,8 +40,16 @@ class TvHomeFragment : BrowseSupportFragment() {
         onItemViewClickedListener = OnItemViewClickedListener { _, item, _, _ ->
             when (item) {
                 is ContentItem.Media -> {
-                    // Navigate to TV media detail/player
-                    // For now, this is a placeholder
+                    val fragment = TvDetailFragment.newInstance(
+                        itemId = item.jellyfinItemId,
+                        title = item.title,
+                        overview = item.overview ?: "",
+                        mediaType = item.mediaType.name
+                    )
+                    parentFragmentManager.beginTransaction()
+                        .replace(android.R.id.content, fragment)
+                        .addToBackStack(null)
+                        .commit()
                 }
                 is ContentItem.PcGame -> {
                     val intent = Intent(requireContext(), StreamActivity::class.java).apply {
@@ -139,8 +149,16 @@ class ContentCardPresenter : Presenter() {
             is ContentItem.LocalRom -> content.system.name
         }
 
-        // Image loading via Coil would be integrated here.
-        // For TV, you'd use cardView.mainImageView and load via Coil/Glide.
+        val imageUrl = when (content) {
+            is ContentItem.Media -> content.imageUrl
+            is ContentItem.PcGame -> content.imageUrl
+            is ContentItem.LocalRom -> null
+        }
+        imageUrl?.let {
+            cardView.mainImageView.load(it) {
+                crossfade(true)
+            }
+        }
     }
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {

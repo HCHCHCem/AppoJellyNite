@@ -9,15 +9,12 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import org.jellyfin.sdk.Jellyfin
 import org.jellyfin.sdk.api.client.ApiClient
-import org.jellyfin.sdk.api.client.extensions.imageApi
 import org.jellyfin.sdk.api.client.extensions.itemsApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
-import org.jellyfin.sdk.api.client.extensions.userViewsApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
-import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.SortOrder
 import java.time.Instant
@@ -139,10 +136,64 @@ class JellyfinRepository @Inject constructor(
         emit(result.toMediaItem(api))
     }.flowOn(Dispatchers.IO)
 
+    fun getEpisodes(seriesId: String): Flow<List<ContentItem.Media>> = flow {
+        val api = getApi()
+        val result by api.itemsApi.getItems(
+            userId = getUserId(),
+            parentId = UUID.fromString(seriesId),
+            includeItemTypes = listOf(BaseItemKind.EPISODE),
+            sortBy = listOf(ItemSortBy.SORT_NAME),
+            sortOrder = listOf(SortOrder.ASCENDING),
+            recursive = true,
+        )
+        emit(result.items?.map { it.toMediaItem(api) } ?: emptyList())
+    }.flowOn(Dispatchers.IO)
+
     fun getStreamUrl(itemId: String): String {
         val config = settingsRepository.serverConfig.value.jellyfin
             ?: throw IllegalStateException("Jellyfin not configured")
         return "${config.serverUrl}/Videos/$itemId/stream?static=true&api_key=${config.accessToken}"
+    }
+
+    fun getTranscodingStreamUrl(itemId: String): String {
+        val config = settingsRepository.serverConfig.value.jellyfin
+            ?: throw IllegalStateException("Jellyfin not configured")
+        return "${config.serverUrl}/Videos/$itemId/stream?api_key=${config.accessToken}" +
+            "&audioCodec=aac&videoCodec=h264&maxWidth=1920"
+    }
+
+    data class SubtitleTrack(
+        val index: Int,
+        val language: String?,
+        val displayTitle: String?,
+        val isDefault: Boolean,
+    )
+
+    fun getSubtitleTracks(itemId: String): Flow<List<SubtitleTrack>> = flow {
+        val api = getApi()
+        val result by api.userLibraryApi.getItem(
+            userId = getUserId(),
+            itemId = UUID.fromString(itemId),
+        )
+        val tracks = result.mediaSources
+            ?.firstOrNull()
+            ?.mediaStreams
+            ?.filter { it.type == org.jellyfin.sdk.model.api.MediaStreamType.SUBTITLE }
+            ?.map { stream ->
+                SubtitleTrack(
+                    index = stream.index ?: 0,
+                    language = stream.language,
+                    displayTitle = stream.displayTitle,
+                    isDefault = stream.isDefault == true,
+                )
+            } ?: emptyList()
+        emit(tracks)
+    }.flowOn(Dispatchers.IO)
+
+    fun getSubtitleUrl(itemId: String, subtitleIndex: Int): String {
+        val config = settingsRepository.serverConfig.value.jellyfin
+            ?: throw IllegalStateException("Jellyfin not configured")
+        return "${config.serverUrl}/Videos/$itemId/$subtitleIndex/Subtitles/$subtitleIndex/Stream.vtt?api_key=${config.accessToken}"
     }
 
     private fun BaseItemDto.toMediaItem(api: ApiClient): ContentItem.Media {

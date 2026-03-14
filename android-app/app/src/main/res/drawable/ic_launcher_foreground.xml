@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Play triangle icon representing media/gaming -->
+    <path
+        android:fillColor="#7C4DFF"
+        android:pathData="M38,30 L78,54 L38,78 Z" />
+    <!-- Gamepad-style dots -->
+    <path
+        android:fillColor="#B388FF"
+        android:pathData="M50,48 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+    <path
+        android:fillColor="#B388FF"
+        android:pathData="M50,60 m-3,0 a3,3 0 1,0 6,0 a3,3 0 1,0 -6,0" />
+</vector>
