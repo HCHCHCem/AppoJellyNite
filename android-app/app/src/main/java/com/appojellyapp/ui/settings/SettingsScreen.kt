@@ -10,11 +10,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onNavigateToPairing: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val config by viewModel.serverConfig.collectAsState()
@@ -182,6 +185,31 @@ fun SettingsScreen(
                     .padding(top = 8.dp),
             ) {
                 Text("Save")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Pairing button
+            val isPaired = config.apollo?.isPaired == true
+            OutlinedButton(
+                onClick = onNavigateToPairing,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    Icons.Default.Link,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+                Text(if (isPaired) "Paired - Manage Pairing" else "Pair with Apollo Server")
+            }
+
+            if (isPaired) {
+                Text(
+                    text = "Paired and ready to stream",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
             }
         }
     }

@@ -47,6 +47,19 @@ android {
     buildFeatures {
         compose = true
     }
+
+    // NDK configuration for moonlight-common-c native library
+    // To enable: add moonlight-common-c as a git submodule under app/src/main/jni/
+    // and uncomment the externalNativeBuild block below
+    //
+    // externalNativeBuild {
+    //     cmake {
+    //         path = file("src/main/jni/CMakeLists.txt")
+    //         version = "3.22.1"
+    //     }
+    // }
+    //
+    // ndkVersion = "26.1.10909125"
 }
 
 apollo {

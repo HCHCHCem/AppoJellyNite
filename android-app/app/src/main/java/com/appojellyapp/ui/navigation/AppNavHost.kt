@@ -32,6 +32,7 @@ import com.appojellyapp.feature.jellyfin.ui.MediaBrowseScreen
 import com.appojellyapp.feature.jellyfin.ui.MediaDetailScreen
 import com.appojellyapp.feature.playnite.ui.GameBrowseScreen
 import com.appojellyapp.feature.streaming.ui.StreamActivity
+import com.appojellyapp.feature.streaming.ui.pairing.PairingScreen
 import com.appojellyapp.ui.settings.SettingsScreen
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
@@ -51,14 +52,9 @@ fun AppNavHost() {
     val onContentClick: (ContentItem) -> Unit = { item ->
         when (item) {
             is ContentItem.Media -> {
-                if (item.mediaType == MediaType.SERIES) {
-                    navController.navigate("media_detail/${item.jellyfinItemId}")
-                } else {
-                    navController.navigate("media_detail/${item.jellyfinItemId}")
-                }
+                navController.navigate("media_detail/${item.jellyfinItemId}")
             }
             is ContentItem.PcGame -> {
-                // Launch streaming activity
                 val intent = Intent(context, StreamActivity::class.java).apply {
                     putExtra(StreamActivity.EXTRA_APOLLO_APP_ID, item.apolloAppId)
                     putExtra(StreamActivity.EXTRA_GAME_NAME, item.title)
@@ -146,7 +142,17 @@ fun AppNavHost() {
             }
 
             composable("settings") {
-                SettingsScreen(onBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToPairing = { navController.navigate("pairing") },
+                )
+            }
+
+            composable("pairing") {
+                PairingScreen(
+                    onBack = { navController.popBackStack() },
+                    onPaired = { navController.popBackStack() },
+                )
             }
         }
     }

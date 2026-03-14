@@ -145,6 +145,71 @@ class JellyfinRepository @Inject constructor(
         return "${config.serverUrl}/Videos/$itemId/stream?static=true&api_key=${config.accessToken}"
     }
 
+    /**
+     * Report playback start to Jellyfin.
+     * This tells the server the client has begun playing an item.
+     */
+    suspend fun reportPlaybackStart(itemId: String) {
+        try {
+            val api = getApi()
+            api.playStateApi.reportPlaybackStart(
+                org.jellyfin.sdk.model.api.PlaybackStartInfo(
+                    itemId = UUID.fromString(itemId),
+                    canSeek = true,
+                    playMethod = org.jellyfin.sdk.model.api.PlayMethod.DIRECT_PLAY,
+                )
+            )
+        } catch (e: Exception) {
+            // Non-fatal — don't break playback if reporting fails
+        }
+    }
+
+    /**
+     * Report playback progress to Jellyfin.
+     * Called periodically during playback to update the "Continue Watching" position.
+     *
+     * @param itemId The Jellyfin item ID
+     * @param positionTicks The current playback position in ticks (1 tick = 100 nanoseconds)
+     * @param isPaused Whether playback is currently paused
+     */
+    suspend fun reportPlaybackProgress(itemId: String, positionTicks: Long, isPaused: Boolean) {
+        try {
+            val api = getApi()
+            api.playStateApi.reportPlaybackProgress(
+                org.jellyfin.sdk.model.api.PlaybackProgressInfo(
+                    itemId = UUID.fromString(itemId),
+                    positionTicks = positionTicks,
+                    isPaused = isPaused,
+                    canSeek = true,
+                    playMethod = org.jellyfin.sdk.model.api.PlayMethod.DIRECT_PLAY,
+                )
+            )
+        } catch (e: Exception) {
+            // Non-fatal
+        }
+    }
+
+    /**
+     * Report playback stopped to Jellyfin.
+     * Called when the user stops or finishes playback.
+     *
+     * @param itemId The Jellyfin item ID
+     * @param positionTicks The final playback position in ticks
+     */
+    suspend fun reportPlaybackStopped(itemId: String, positionTicks: Long) {
+        try {
+            val api = getApi()
+            api.playStateApi.reportPlaybackStopped(
+                org.jellyfin.sdk.model.api.PlaybackStopInfo(
+                    itemId = UUID.fromString(itemId),
+                    positionTicks = positionTicks,
+                )
+            )
+        } catch (e: Exception) {
+            // Non-fatal
+        }
+    }
+
     private fun BaseItemDto.toMediaItem(api: ApiClient): ContentItem.Media {
         val mediaType = when (type) {
             BaseItemKind.MOVIE -> MediaType.MOVIE
