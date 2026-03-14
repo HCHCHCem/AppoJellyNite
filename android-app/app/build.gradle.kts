@@ -52,7 +52,7 @@ android {
 apollo {
     service("playniteWeb") {
         packageName.set("com.appojellyapp.feature.playnite.graphql")
-        schemaFiles.from("src/main/graphql/schema.graphqls")
+        srcDir("src/main/graphql")
     }
 }
 
