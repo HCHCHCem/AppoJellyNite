@@ -16,6 +16,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,9 +35,25 @@ fun StreamScreen(
 ) {
     val state by viewModel.streamState.collectAsState()
     val error by viewModel.error.collectAsState()
+    var showSettings by remember { mutableStateOf(true) }
 
-    LaunchedEffect(apolloAppId) {
-        viewModel.startStream(apolloAppId, gameName)
+    if (showSettings && state == StreamState.IDLE) {
+        StreamSettingsDialog(
+            currentConfig = viewModel.getStreamConfig(),
+            onDismiss = onDisconnect,
+            onConfirm = { config ->
+                showSettings = false
+                viewModel.updateStreamConfig(config)
+                viewModel.startStream(apolloAppId, gameName)
+            },
+        )
+        return
+    }
+
+    LaunchedEffect(apolloAppId, showSettings) {
+        if (!showSettings && state == StreamState.IDLE) {
+            viewModel.startStream(apolloAppId, gameName)
+        }
     }
 
     DisposableEffect(Unit) {

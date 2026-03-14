@@ -1,11 +1,16 @@
 package com.appojellyapp.tv.detail
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.leanback.app.DetailsSupportFragment
-import androidx.leanback.widget.*
-import com.appojellyapp.core.model.ContentItem
+import androidx.leanback.widget.AbstractDetailsDescriptionPresenter
+import androidx.leanback.widget.Action
+import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.ClassPresenterSelector
+import androidx.leanback.widget.DetailsOverviewRow
+import androidx.leanback.widget.FullWidthDetailsOverviewRowPresenter
+import androidx.leanback.widget.ListRow
+import androidx.leanback.widget.ListRowPresenter
 import com.appojellyapp.core.model.MediaType
 import com.appojellyapp.tv.playback.TvPlaybackFragment
 import dagger.hilt.android.AndroidEntryPoint

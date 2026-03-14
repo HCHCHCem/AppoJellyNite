@@ -28,16 +28,26 @@ class MediaDetailViewModel @Inject constructor(
     private val _episodes = MutableStateFlow<List<ContentItem.Media>>(emptyList())
     val episodes: StateFlow<List<ContentItem.Media>> = _episodes.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         if (itemId.isNotEmpty()) {
             loadItem()
         }
     }
 
+    fun retry() {
+        _error.value = null
+        loadItem()
+    }
+
     private fun loadItem() {
         viewModelScope.launch {
             jellyfinRepository.getItemDetails(itemId)
-                .catch { /* handle error */ }
+                .catch { e ->
+                    _error.value = e.message ?: "Failed to load item details"
+                }
                 .collect { media ->
                     _item.value = media
                     if (media.mediaType == MediaType.SERIES) {

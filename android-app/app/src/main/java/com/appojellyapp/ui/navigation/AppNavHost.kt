@@ -1,6 +1,7 @@
 package com.appojellyapp.ui.navigation
 
 import android.content.Intent
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Gamepad
@@ -25,13 +26,16 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.appojellyapp.core.model.ContentItem
 import com.appojellyapp.core.model.MediaType
+import com.appojellyapp.core.network.NetworkHelper
 import com.appojellyapp.feature.home.ui.HomeScreen
 import com.appojellyapp.feature.home.ui.SearchScreen
 import com.appojellyapp.feature.jellyfin.player.PlayerScreen
 import com.appojellyapp.feature.jellyfin.ui.MediaBrowseScreen
 import com.appojellyapp.feature.jellyfin.ui.MediaDetailScreen
 import com.appojellyapp.feature.playnite.ui.GameBrowseScreen
+import com.appojellyapp.feature.playnite.ui.GameDetailScreen
 import com.appojellyapp.feature.streaming.ui.StreamActivity
+import com.appojellyapp.ui.components.ConnectionStatusBar
 import com.appojellyapp.ui.settings.SettingsScreen
 
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
@@ -44,26 +48,25 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
 val bottomNavItems = listOf(Screen.Home, Screen.Games, Screen.Media, Screen.Search)
 
 @Composable
-fun AppNavHost() {
+fun AppNavHost(networkHelper: NetworkHelper? = null) {
     val navController = rememberNavController()
     val context = LocalContext.current
+
+    val launchStream: (ContentItem.PcGame) -> Unit = { game ->
+        val intent = Intent(context, StreamActivity::class.java).apply {
+            putExtra(StreamActivity.EXTRA_APOLLO_APP_ID, game.apolloAppId)
+            putExtra(StreamActivity.EXTRA_GAME_NAME, game.title)
+        }
+        context.startActivity(intent)
+    }
 
     val onContentClick: (ContentItem) -> Unit = { item ->
         when (item) {
             is ContentItem.Media -> {
-                if (item.mediaType == MediaType.SERIES) {
-                    navController.navigate("media_detail/${item.jellyfinItemId}")
-                } else {
-                    navController.navigate("media_detail/${item.jellyfinItemId}")
-                }
+                navController.navigate("media_detail/${item.jellyfinItemId}")
             }
             is ContentItem.PcGame -> {
-                // Launch streaming activity
-                val intent = Intent(context, StreamActivity::class.java).apply {
-                    putExtra(StreamActivity.EXTRA_APOLLO_APP_ID, item.apolloAppId)
-                    putExtra(StreamActivity.EXTRA_GAME_NAME, item.title)
-                }
-                context.startActivity(intent)
+                navController.navigate("game_detail/${item.id}")
             }
             is ContentItem.LocalRom -> {
                 // Phase 4: Launch emulation
@@ -73,25 +76,30 @@ fun AppNavHost() {
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
+            Column {
+                networkHelper?.let { helper ->
+                    ConnectionStatusBar(connectionState = helper.connectionState)
+                }
+                NavigationBar {
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentDestination = navBackStackEntry?.destination
 
-                bottomNavItems.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = screen.label) },
-                        label = { Text(screen.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                    bottomNavItems.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon, contentDescription = screen.label) },
+                            label = { Text(screen.label) },
+                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -108,11 +116,7 @@ fun AppNavHost() {
             composable(Screen.Games.route) {
                 GameBrowseScreen(
                     onGameClick = { game ->
-                        val intent = Intent(context, StreamActivity::class.java).apply {
-                            putExtra(StreamActivity.EXTRA_APOLLO_APP_ID, game.apolloAppId)
-                            putExtra(StreamActivity.EXTRA_GAME_NAME, game.title)
-                        }
-                        context.startActivity(intent)
+                        navController.navigate("game_detail/${game.id}")
                     },
                 )
             }
@@ -127,6 +131,13 @@ fun AppNavHost() {
 
             composable(Screen.Search.route) {
                 SearchScreen(onContentClick = onContentClick)
+            }
+
+            composable("game_detail/{gameId}") {
+                GameDetailScreen(
+                    onBack = { navController.popBackStack() },
+                    onStream = { game -> launchStream(game) },
+                )
             }
 
             composable("media_detail/{itemId}") { backStackEntry ->
